@@ -1,8 +1,9 @@
 from random import randint
-import sys, traceback, threading, socket
+import threading, socket
 
 from VideoStream import VideoStream
 from RtpPacket import RtpPacket
+
 
 class ServerWorker:
     SETUP = 'SETUP'
@@ -33,8 +34,8 @@ class ServerWorker:
         while True:
             data = connSocket.recv(256)
             if data:
-                print "Data received:\n" + data
-                self.processRtspRequest(data)
+                print("Data received: {}".format(data))
+                self.processRtspRequest(data.decode())
 
     def processRtspRequest(self, data):
         """Process RTSP request sent from the client."""
@@ -53,7 +54,7 @@ class ServerWorker:
         if requestType == self.SETUP:
             if self.state == self.INIT:
                 # Update state
-                print "processing SETUP\n"
+                print("processing SETUP\n")
 
                 try:
                     self.clientInfo['videoStream'] = VideoStream(filename)
@@ -73,7 +74,7 @@ class ServerWorker:
         # Process PLAY request
         elif requestType == self.PLAY:
             if self.state == self.READY:
-                print "processing PLAY\n"
+                print("processing PLAY\n")
                 self.state = self.PLAYING
 
                 # Create a new socket for RTP/UDP
@@ -83,13 +84,13 @@ class ServerWorker:
 
                 # Create a new thread and start sending RTP packets
                 self.clientInfo['event'] = threading.Event()
-                self.clientInfo['worker']= threading.Thread(target=self.sendRtp)
+                self.clientInfo['worker'] = threading.Thread(target=self.sendRtp)
                 self.clientInfo['worker'].start()
 
         # Process PAUSE request
         elif requestType == self.PAUSE:
             if self.state == self.PLAYING:
-                print "processing PAUSE\n"
+                print("processing PAUSE\n")
                 self.state = self.READY
 
                 self.clientInfo['event'].set()
@@ -98,7 +99,7 @@ class ServerWorker:
 
         # Process TEARDOWN request
         elif requestType == self.TEARDOWN:
-            print "processing TEARDOWN\n"
+            print("processing TEARDOWN\n")
 
             self.clientInfo['event'].set()
 
@@ -122,13 +123,15 @@ class ServerWorker:
                 try:
                     address = self.clientInfo['rtspSocket'][1][0]
                     port = int(self.clientInfo['rtpPort'])
-                    # print(port)
-                    self.clientInfo['rtpSocket'].sendto(self.makeRtp(data, frameNumber),(address,port))
+
+                    # pdb.set_trace()
+
+                    self.clientInfo['rtpSocket'].sendto(self.makeRtp(data, frameNumber), (address, port))
                 except:
-                    print "Connection Error"
-                    #print '-'*60
-                    #traceback.print_exc(file=sys.stdout)
-                    #print '-'*60
+                    print("Connection Error")
+                # print('-'*60)
+                # traceback.print_exc(file=sys.stdout)
+                # print('-'*60)
 
     def makeRtp(self, payload, frameNbr):
         """RTP-packetize the video data."""
@@ -137,7 +140,7 @@ class ServerWorker:
         extension = 0
         cc = 0
         marker = 0
-        pt = 26 # MJPEG type
+        pt = 26  # MJPEG type
         seqnum = frameNbr
         ssrc = 0
 
@@ -150,13 +153,13 @@ class ServerWorker:
     def replyRtsp(self, code, seq):
         """Send RTSP reply to the client."""
         if code == self.OK_200:
-            #print "200 OK"
+            # print("200 OK")
             reply = 'RTSP/1.0 200 OK\nCSeq: ' + seq + '\nSession: ' + str(self.clientInfo['session'])
             connSocket = self.clientInfo['rtspSocket'][0]
-            connSocket.send(reply)
+            connSocket.send(reply.encode())
 
         # Error messages
         elif code == self.FILE_NOT_FOUND_404:
-            print "404 NOT FOUND"
+            print("404 NOT FOUND")
         elif code == self.CON_ERR_500:
-            print "500 CONNECTION ERROR"
+            print("500 CONNECTION ERROR")

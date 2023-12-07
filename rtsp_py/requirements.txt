@@ -1,0 +1,4 @@
+ffmpeg
+tk
+ttkbootstrap
+Pillow
