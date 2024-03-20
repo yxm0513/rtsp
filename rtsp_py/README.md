@@ -1,3 +1,5 @@
+brew install python-tk
+
 # RTP protocol headers
 ![img.png](docs/RTP_packet_diagram.png)
 - version: 2 bits
