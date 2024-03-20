@@ -15,3 +15,7 @@
 		current_frame = ImageTk.PhotoImage(Image.open(imageFile))
         	self.label.configure(image=current_frame)
 	客户端就播放了
+
+# BXC_RtspServer_study_CPP
+
+基本就是server端，建立rtspserver和rtpserver, 然后读取h264, 或者acc 在play的时候send给client
